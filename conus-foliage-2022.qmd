@@ -1,13 +1,14 @@
 ---
 title: 'ConUS Foliage 2022'
 author: "boB Rudis (@hrbrmstr)"
-format: html
+format:
+  html:
+    theme:
+      light: flatly
+      dark: darkly
 code-tools: true
-self-contained: true
+self-contained: false
 echo: false
-theme:
-  light: flatly
-  dark: darkly
 observable: "https://observablehq.com/@hrbrmstr/conus-foliage-2022"
 ---
 
