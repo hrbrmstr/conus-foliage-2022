@@ -23,8 +23,8 @@ chart = Choropleth(rendered2022, {
   scale: d3.scaleLinear,
   domain: foliage_levels,
   range: foliage_colors,
-  title: (f, d) => `${f.name}`,
-  features: counties,
+  title: (f, d) =>
+    `${f.properties.name}, ${statemap.get(f.id.slice(0, 2)).properties.name}`,  features: counties,
   borders: statemesh,
   width: 975,
   height: 610
