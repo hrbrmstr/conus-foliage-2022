@@ -5,6 +5,9 @@ format: html
 code-tools: true
 self-contained: true
 echo: false
+theme:
+  light: flatly
+  dark: darkly
 observable: "https://observablehq.com/@hrbrmstr/conus-foliage-2022"
 ---
 
