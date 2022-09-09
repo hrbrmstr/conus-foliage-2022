@@ -1,0 +1,329 @@
+---
+title: 'ConUS Foliage 2022'
+author: "boB Rudis (@hrbrmstr)"
+format: html
+code-tools: true
+self-contained: true
+echo: false
+observable: "https://observablehq.com/@hrbrmstr/conus-foliage-2022"
+---
+
+```{ojs}
+viewof week = Scrubber(week_label, {autoplay: false, delay: 500})
+```
+
+```{ojs}
+chart = Choropleth(rendered2022, {
+  id: (d) => d.id.toString().padStart(5, "0"),
+  value: (d) => d[week_label.indexOf(week)+1],
+  scale: d3.scaleLinear,
+  domain: foliage_levels,
+  range: foliage_colors,
+  title: (f, d) => `${f.name}`,
+  features: counties,
+  borders: statemesh,
+  width: 975,
+  height: 610
+})
+```
+
+```{ojs}
+Swatches(d3.scaleOrdinal(foliage_labels, foliage_colors))
+```
+
+```{ojs}
+rendered2022 = FileAttachment("rendered2022.csv").csv({ typed: true })
+```
+
+```{ojs}
+statemap = new Map(states.features.map(d => [d.id, d]))
+```
+
+```{ojs}
+states = topojson.feature(us, us.objects.states)
+```
+
+```{ojs}
+counties = {
+  var cty = topojson.feature(us, us.objects.counties)
+  cty.features = cty.features.filter(d => d.id.substr(0, 2) != "02" & d.id.substr(0, 2) != "15")
+  return(cty)
+}
+```
+
+```{ojs}
+statemesh = topojson.mesh(us, us.objects.states, (a, b) => a !== b)
+```
+
+```{ojs}
+us = FileAttachment("counties-albers-10m.json").json()
+```
+
+```{ojs}
+foliage_labels = [ "No Change", "Minimal", "Patchy", "Partial", "Near Peak", "Peak", "Past Peak" ]
+```
+
+```{ojs}
+foliage_levels = [ 0.01, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6 ]
+```
+
+```{ojs}
+foliage_colors = [ "#83A87C", "#FCF6B4", "#FDCC5C", "#F68C3F", "#EF3C23", "#BD1F29", "#98371F" ]
+```
+
+```{ojs}
+week_label = [ "Sept 5th", "Sept 12th", "Sept 19th", "Sept 26th", "Oct 3rd", "Oct 10th", "Oct 17th", "Oct 24th", "Oct 31st", "Nov 7th", "Nov 14th", "Nov 21st"]
+```
+
+```{ojs}
+// Copyright 2021, Observable Inc.
+// Released under the ISC license.
+// https://observablehq.com/@d3/color-legend
+function Swatches(color, {
+  columns = null,
+  format,
+  unknown: formatUnknown,
+  swatchSize = 15,
+  swatchWidth = swatchSize,
+  swatchHeight = swatchSize,
+  marginLeft = 0
+} = {}) {
+  const id = `-swatches-${Math.random().toString(16).slice(2)}`;
+  const unknown = formatUnknown == null ? undefined : color.unknown();
+  const unknowns = unknown == null || unknown === d3.scaleImplicit ? [] : [unknown];
+  const domain = color.domain().concat(unknowns);
+  if (format === undefined) format = x => x === unknown ? formatUnknown : x;
+
+  function entity(character) {
+    return `&#${character.charCodeAt(0).toString()};`;
+  }
+
+  if (columns !== null) return htl.html`<div style="display: flex; align-items: center; margin-left: ${+marginLeft}px; min-height: 33px; font: 10px sans-serif;">
+  <style>
+
+.${id}-item {
+  break-inside: avoid;
+  display: flex;
+  align-items: center;
+  padding-bottom: 1px;
+}
+
+.${id}-label {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: calc(100% - ${+swatchWidth}px - 0.5em);
+}
+
+.${id}-swatch {
+  width: ${+swatchWidth}px;
+  height: ${+swatchHeight}px;
+  margin: 0 0.5em 0 0;
+}
+
+  </style>
+  <div style=${{width: "100%", columns}}>${domain.map(value => {
+    const label = `${format(value)}`;
+    return htl.html`<div class=${id}-item>
+      <div class=${id}-swatch style=${{background: color(value)}}></div>
+      <div class=${id}-label title=${label}>${label}</div>
+    </div>`;
+  })}
+  </div>
+</div>`;
+
+  return htl.html`<div style="display: flex; align-items: center; min-height: 33px; margin-left: ${+marginLeft}px; font: 10px sans-serif;">
+  <style>
+
+.${id} {
+  display: inline-flex;
+  align-items: center;
+  margin-right: 1em;
+}
+
+.${id}::before {
+  content: "";
+  width: ${+swatchWidth}px;
+  height: ${+swatchHeight}px;
+  margin-right: 0.5em;
+  background: var(--color);
+}
+
+  </style>
+  <div>${domain.map(value => htl.html`<span class="${id}" style="--color: ${color(value)}">${format(value)}</span>`)}</div>`;
+}
+```
+
+```{ojs}
+function Scrubber(values, {
+  format = value => value,
+  initial = 0,
+  delay = null,
+  autoplay = true,
+  loop = true,
+  loopDelay = null,
+  alternate = false
+} = {}) {
+  values = Array.from(values);
+  const form = html`<form style="font: 12px var(--sans-serif); font-variant-numeric: tabular-nums; display: flex; height: 33px; align-items: center;">
+  <button name=b type=button style="margin-right: 0.4em; width: 5em;"></button>
+  <label style="display: flex; align-items: center;">
+    <input name=i type=range min=0 max=${values.length - 1} value=${initial} step=1 style="width: 180px;">
+    <output name=o style="margin-left: 0.4em;"></output>
+  </label>
+</form>`;
+  let frame = null;
+  let timer = null;
+  let interval = null;
+  let direction = 1;
+  function start() {
+    form.b.textContent = "Pause";
+    if (delay === null) frame = requestAnimationFrame(tick);
+    else interval = setInterval(tick, delay);
+  }
+  function stop() {
+    form.b.textContent = "Play";
+    if (frame !== null) cancelAnimationFrame(frame), frame = null;
+    if (timer !== null) clearTimeout(timer), timer = null;
+    if (interval !== null) clearInterval(interval), interval = null;
+  }
+  function running() {
+    return frame !== null || timer !== null || interval !== null;
+  }
+  function tick() {
+    if (form.i.valueAsNumber === (direction > 0 ? values.length - 1 : direction < 0 ? 0 : NaN)) {
+      if (!loop) return stop();
+      if (alternate) direction = -direction;
+      if (loopDelay !== null) {
+        if (frame !== null) cancelAnimationFrame(frame), frame = null;
+        if (interval !== null) clearInterval(interval), interval = null;
+        timer = setTimeout(() => (step(), start()), loopDelay);
+        return;
+      }
+    }
+    if (delay === null) frame = requestAnimationFrame(tick);
+    step();
+  }
+  function step() {
+    form.i.valueAsNumber = (form.i.valueAsNumber + direction + values.length) % values.length;
+    form.i.dispatchEvent(new CustomEvent("input", {bubbles: true}));
+  }
+  form.i.oninput = event => {
+    if (event && event.isTrusted && running()) stop();
+    form.value = values[form.i.valueAsNumber];
+    form.o.value = format(form.value, form.i.valueAsNumber, values);
+  };
+  form.b.onclick = () => {
+    if (running()) return stop();
+    direction = alternate && form.i.valueAsNumber === values.length - 1 ? -1 : 1;
+    form.i.valueAsNumber = (form.i.valueAsNumber + direction) % values.length;
+    form.i.dispatchEvent(new CustomEvent("input", {bubbles: true}));
+    start();
+  };
+  form.i.oninput();
+  if (autoplay) start();
+  else stop();
+  Inputs.disposal(form).then(stop);
+  return form;
+}
+```
+
+```{ojs}
+// Copyright 2021 Observable, Inc.
+// Released under the ISC license.
+// https://observablehq.com/@d3/choropleth
+function Choropleth(data, {
+  id = d => d.id, // given d in data, returns the feature id
+  value = () => undefined, // given d in data, returns the quantitative value
+  title, // given a feature f and possibly a datum d, returns the hover text
+  format, // optional format specifier for the title
+  scale = d3.scaleSequential, // type of color scale
+  domain, // [min, max] values; input of color scale
+  range = d3.interpolateBlues, // output of color scale
+  width = 640, // outer width, in pixels
+  height, // outer height, in pixels
+  projection, // a D3 projection; null for pre-projected geometry
+  features, // a GeoJSON feature collection
+  featureId = d => d.id, // given a feature, returns its id
+  borders, // a GeoJSON object for stroking borders
+  outline = projection && projection.rotate ? {type: "Sphere"} : null, // a GeoJSON object for the background
+  unknown = "#ccc", // fill color for missing data
+  fill = "white", // fill color for outline
+  stroke = "white", // stroke color for borders
+  strokeLinecap = "round", // stroke line cap for borders
+  strokeLinejoin = "round", // stroke line join for borders
+  strokeWidth, // stroke width for borders
+  strokeOpacity, // stroke opacity for borders
+} = {}) {
+  // Compute values.
+  const N = d3.map(data, id);
+  const V = d3.map(data, value).map(d => d == null ? NaN : +d);
+  const Im = new d3.InternMap(N.map((id, i) => [id, i]));
+  const If = d3.map(features.features, featureId);
+
+  // Compute default domains.
+  if (domain === undefined) domain = d3.extent(V);
+
+  // Construct scales.
+  const color = scale(domain, range);
+  if (color.unknown && unknown !== undefined) color.unknown(unknown);
+
+  // Compute titles.
+  if (title === undefined) {
+    format = color.tickFormat(100, format);
+    title = (f, i) => `${f.properties.name}\n${format(V[i])}`;
+  } else if (title !== null) {
+    const T = title;
+    const O = d3.map(data, d => d);
+    title = (f, i) => T(f, O[i]);
+  }
+
+  // Compute the default height. If an outline object is specified, scale the projection to fit
+  // the width, and then compute the corresponding height.
+  if (height === undefined) {
+    if (outline === undefined) {
+      height = 400;
+    } else {
+      const [[x0, y0], [x1, y1]] = d3.geoPath(projection.fitWidth(width, outline)).bounds(outline);
+      const dy = Math.ceil(y1 - y0), l = Math.min(Math.ceil(x1 - x0), dy);
+      projection.scale(projection.scale() * (l - 1) / l).precision(0.2);
+      height = dy;
+    }
+  }
+
+  // Construct a path generator.
+  const path = d3.geoPath(projection);
+
+  const svg = d3.create("svg")
+      .attr("width", width)
+      .attr("height", height)
+      .attr("viewBox", [0, 0, width, height])
+      .attr("style", "width: 100%; height: auto; height: intrinsic;");
+
+  if (outline != null) svg.append("path")
+      .attr("fill", fill)
+      .attr("stroke", "currentColor")
+      .attr("d", path(outline));
+
+  svg.append("g")
+    .selectAll("path")
+    .data(features.features)
+    .join("path")
+      .attr("fill", (d, i) => color(V[Im.get(If[i])]))
+      .attr("d", path)
+    .append("title")
+      .text((d, i) => title(d, Im.get(If[i])));
+
+  if (borders != null) svg.append("path")
+      .attr("pointer-events", "none")
+      .attr("fill", "none")
+      .attr("stroke", stroke)
+      .attr("stroke-linecap", strokeLinecap)
+      .attr("stroke-linejoin", strokeLinejoin)
+      .attr("stroke-width", strokeWidth)
+      .attr("stroke-opacity", strokeOpacity)
+      .attr("d", path(borders));
+
+  return Object.assign(svg.node(), {scales: {color}});
+}
+```

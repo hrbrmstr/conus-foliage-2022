@@ -1,0 +1,16 @@
+{
+  "hash": "95f06832789da2d2e646a4d2d74093c5",
+  "result": {
+    "markdown": "---\ntitle: 'ConUS Foliage 2022'\nauthor: \"boB Rudis\"\nformat: html\necho: false\nobservable: \"https://observablehq.com/@hrbrmstr/conus-foliage-2022\"\n---\n\n::: {.cell}\n::: {.cell-output .cell-output-stdout}\n```\n# A tibble: 1 × 14\n     id   `1`   `2`   `3`   `4`   `5`   `6`   `7`   `8`   `9`  `10`  `11`  `12`\n  <int> <dbl> <dbl> <dbl> <dbl> <dbl> <dbl> <dbl> <dbl> <dbl> <dbl> <dbl> <dbl>\n1 46101  0.01  0.01  0.01  0.01   0.1   0.2   0.3   0.4   0.5   0.6   0.6   0.6\n# … with 1 more variable: `13` <dbl>\n```\n:::\n:::\n\n\nPeak county foliage by week starting September, 2022\n\n\n```{ojs}\nviewof week = Inputs.range([1, 13], {\n  step: 1,\n  label: \"Week:\",\n  width: \"300px\",\n  value: 1\n})\n```\n\n```{ojs}\nchart = Choropleth(rendered2022, {\n  id: (d) => d.id.toString().padStart(5, \"0\"),\n  value: (d) => d[week],\n  scale: d3.scaleQuantize,\n  domain: [0.01, 0.6],\n  range: d3.schemeOrRd[7],\n  title: (f, d) => `${f.name}`,\n  features: counties,\n  borders: statemesh,\n  width: 975,\n  height: 610\n})\n```\n\n```{ojs}\nrendered2022 = FileAttachment(\"rendered2022.csv\").csv({ typed: true })\n```\n\n```{ojs}\nimport { Choropleth, states, counties, statemesh } from \"@d3/choropleth\"\n```\n",
+    "supporting": [
+      "conus-foliage-2022_files"
+    ],
+    "filters": [
+      "rmarkdown/pagebreak.lua"
+    ],
+    "includes": {},
+    "engineDependencies": {},
+    "preserve": {},
+    "postProcess": true
+  }
+}
