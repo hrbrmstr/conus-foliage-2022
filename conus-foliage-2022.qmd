@@ -1,11 +1,10 @@
 ---
 title: 'ConUS Foliage 2022'
 author: "boB Rudis (@hrbrmstr)"
-format:
-  html:
-    theme:
-      light: flatly
-      dark: darkly
+format: html
+theme:
+  light: flatly
+  dark: darkly
 code-tools: true
 self-contained: false
 echo: false
@@ -77,7 +76,7 @@ foliage_colors = [ "#83A87C", "#FCF6B4", "#FDCC5C", "#F68C3F", "#EF3C23", "#BD1F
 ```
 
 ```{ojs}
-week_label = [ "Sept 5th", "Sept 12th", "Sept 19th", "Sept 26th", "Oct 3rd", "Oct 10th", "Oct 17th", "Oct 24th", "Oct 31st", "Nov 7th", "Nov 14th", "Nov 21st"]
+week_label = [ "Sept 5th", "Sept 12th", "Sept 19th", "Sept 26th", "Oct 3rd", "Oct 10th", "Oct 17th", "Oct 24th", "Oct 31st", "Nov 7th", "Nov 14th", "Nov 21st" ]
 ```
 
 ```{ojs}
